@@ -147,7 +147,7 @@ function ScoreCard({ score, results }) {
 
 // ─── Gate modal ───────────────────────────────────────────────────────────────
 
-function GateModal({ domain, onSuccess, onClose }) {
+function GateModal({ domain, scanScore, scanResults, onSuccess, onClose }) {
   const [fields, setFields] = useState({
     name: '', email: '', firmName: '',
     mainConcern:   CONCERNS[0],
@@ -168,7 +168,7 @@ function GateModal({ domain, onSuccess, onClose }) {
     setBusy(true);
     setError('');
     try {
-      await submitGate({ domain, ...fields });
+      await submitGate({ domain, scanScore, scanResults, ...fields });
       onSuccess(fields.email.trim());
     } catch (err) {
       setError(err.message || 'Submission failed. Please try again.');
@@ -476,6 +476,8 @@ function ResultsView({ data, onBack }) {
       {gateOpen && (
         <GateModal
           domain={data.domain}
+          scanScore={score}
+          scanResults={data.results}
           onSuccess={handleGateSuccess}
           onClose={() => setGateOpen(false)}
         />
