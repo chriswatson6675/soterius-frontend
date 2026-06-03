@@ -165,12 +165,18 @@ function GateModal({ domain, scanScore, scanResults, onSuccess, onClose }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    console.log('[GATE] handleSubmit fired');
+    console.log('[GATE] API URL:', import.meta.env.VITE_API_URL || 'NOT SET — falling back to localhost');
+    console.log('[GATE] Payload domain:', domain, '| email:', fields.email);
     setBusy(true);
     setError('');
     try {
-      await submitGate({ domain, scanScore, scanResults, ...fields });
+      console.log('[GATE] Calling submitGate...');
+      const result = await submitGate({ domain, scanScore, scanResults, ...fields });
+      console.log('[GATE] Success:', result);
       onSuccess(fields.email.trim());
     } catch (err) {
+      console.error('[GATE] Error:', err);
       setError(err.message || 'Submission failed. Please try again.');
       setBusy(false);
     }
