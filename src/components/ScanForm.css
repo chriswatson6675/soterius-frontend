@@ -1,0 +1,49 @@
+.scan-form { width: 100%; }
+
+.scan-input-group {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+  padding: 6px;
+}
+
+.scan-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 7px;
+  font-size: 1rem;
+  background: #fff;
+  color: #0f172a;
+  outline: none;
+  transition: box-shadow 200ms;
+  min-width: 0;
+}
+.scan-input:focus { box-shadow: 0 0 0 3px rgba(37,99,235,0.35); }
+.scan-input.scan-input-error { box-shadow: 0 0 0 2px #ef4444; }
+.scan-input::placeholder { color: #94a3b8; }
+
+.scan-btn {
+  white-space: nowrap;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+.scan-error {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #fca5a5;
+}
+
+.scan-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }

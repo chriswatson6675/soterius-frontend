@@ -1,0 +1,4 @@
+/* Reset only — all design tokens and component styles live in App.css */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { margin: 0; }
+#root { min-height: 100vh; }

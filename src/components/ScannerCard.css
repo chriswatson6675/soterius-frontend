@@ -1,0 +1,175 @@
+.scanner-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: box-shadow var(--transition);
+  box-shadow: var(--shadow);
+}
+.scanner-card:hover { box-shadow: var(--shadow-md); }
+
+.scanner-card-pass  { border-left: 4px solid var(--color-success); }
+.scanner-card-warn  { border-left: 4px solid var(--color-warning); }
+.scanner-card-fail  { border-left: 4px solid var(--color-danger); }
+.scanner-card-error { border-left: 4px solid var(--color-error); }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+.card-header-clickable {
+  cursor: pointer;
+  user-select: none;
+}
+.card-header-clickable:hover { background: rgba(0,0,0,0.025); }
+
+.card-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+.card-title-group { flex: 1; min-width: 0; }
+
+.card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-question {
+  margin: 0.2rem 0 0 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.card-issue-count {
+  font-size: 0.75rem;
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.card-chevron {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+.card-chevron-open { transform: rotate(180deg); }
+
+/* Summary — always visible below header */
+.card-summary {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--color-border);
+  border-left: 3px solid transparent;
+}
+.card-summary-pass  { background: #f0fdf4; border-left-color: var(--color-success); }
+.card-summary-warn  { background: #fffbeb; border-left-color: var(--color-warning); }
+.card-summary-fail  { background: #fff1f2; border-left-color: var(--color-danger); }
+.card-summary-error { background: #f8fafc; border-left-color: var(--color-error); }
+
+.card-explanation {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  margin: 0;
+}
+
+
+.card-body {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+}
+.card-body-open {
+  max-height: 1200px;
+  opacity: 1;
+}
+.card-body-inner {
+  border-top: 1px solid var(--color-border);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Advice section */
+.card-advice {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+}
+.card-advice-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1d4ed8;
+  margin-bottom: 0.4rem;
+}
+.card-advice-text {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: #1e3a5f;
+  margin: 0;
+}
+
+.card-status-explanation {
+  padding: 0.75rem;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #333;
+}
+.card-status-explanation p { margin: 0; }
+
+.issues-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.issues-list li {
+  padding: 0.5rem 0.75rem;
+  background-color: #fff3cd;
+  border-left: 3px solid #ffc107;
+  border-radius: 3px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #333;
+}
+
+.scanner-card-fail .issues-list li {
+  background-color: #fef2f2;
+  border-left-color: var(--color-danger);
+  color: #7f1d1d;
+}
+
+.no-issues {
+  color: #28a745;
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin: 0;
+  padding: 0.75rem;
+  background: #f0fdf4;
+  border-radius: 4px;
+}
+
+.error-message {
+  color: var(--color-danger);
+  font-size: 0.875rem;
+  padding: 0.75rem;
+  background: #fef2f2;
+  border-radius: 4px;
+  border-left: 3px solid var(--color-danger);
+  margin: 0;
+}
