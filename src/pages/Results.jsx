@@ -123,6 +123,68 @@ function ErrorView({ domain, message, onRetry, autoRetry }) {
   );
 }
 
+// ─── Score gauge (SVG semicircle) ────────────────────────────────────────────
+
+function ScoreGauge({ score }) {
+  const cx = 100, cy = 105, r = 78, sw = 16;
+  const color = score >= 80 ? '#16a34a' : score >= 50 ? '#ca8a04' : '#dc2626';
+
+  function toXY(deg) {
+    const rad = (deg * Math.PI) / 180;
+    return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+  }
+
+  const [sx, sy] = toXY(180); // left endpoint  (22, 105)
+  const [ex, ey] = toXY(0);   // right endpoint (178, 105)
+
+  // Full background arc: 180° clockwise from left → top → right
+  const bgPath = `M ${sx} ${sy} A ${r} ${r} 0 0 1 ${ex} ${ey}`;
+
+  // Score fill arc — span is always ≤ 180° so large-arc-flag=0
+  const scoreAngle = 180 + (score / 100) * 180;
+  const [nx, ny]   = toXY(scoreAngle);
+  const scorePath  = score > 0
+    ? `M ${sx} ${sy} A ${r} ${r} 0 0 1 ${nx} ${ny}`
+    : null;
+
+  return (
+    <svg
+      viewBox="0 0 200 130"
+      role="img"
+      aria-label={`Security score: ${score}%`}
+      style={{ width: '100%', maxWidth: 200, display: 'block', margin: '0 auto' }}
+    >
+      {/* Background arc */}
+      <path d={bgPath} fill="none" stroke="#e5e7eb" strokeWidth={sw} strokeLinecap="butt" />
+
+      {/* Colored fill arc */}
+      {scorePath && (
+        <path d={scorePath} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="butt" />
+      )}
+
+      {/* Endpoint cap dot (not shown at 0% or 100%) */}
+      {score > 0 && score < 100 && (
+        <circle cx={nx} cy={ny} r={sw / 2} fill={color} />
+      )}
+
+      {/* Score percentage */}
+      <text x={cx} y={86} textAnchor="middle" dominantBaseline="middle"
+        fontSize="34" fontWeight="700" fill={color} fontFamily="inherit">
+        {score}%
+      </text>
+
+      {/* Subtitle */}
+      <text x={cx} y={112} textAnchor="middle" fontSize="11" fill="#9ca3af" fontFamily="inherit">
+        Security Score
+      </text>
+
+      {/* Zone end-labels */}
+      <text x={20} y={124} fontSize="9" fontWeight="600" fill="#dc2626" fontFamily="inherit">HIGH RISK</text>
+      <text x={180} y={124} fontSize="9" fontWeight="600" fill="#16a34a" fontFamily="inherit" textAnchor="end">LOW RISK</text>
+    </svg>
+  );
+}
+
 // ─── Score card ───────────────────────────────────────────────────────────────
 
 function ScoreCard({ score, scanners }) {
@@ -136,9 +198,8 @@ function ScoreCard({ score, scanners }) {
 
   return (
     <div className="rp-score-card" role="region" aria-label="Overall security score">
-      <div className="rp-score-number" aria-label={`Score: ${score} out of 100`}>
-        <span className="rp-score-value">{score}</span>
-        <span className="rp-score-denom"> / 100</span>
+      <div className="rp-gauge-wrap">
+        <ScoreGauge score={score} />
       </div>
       <div className="rp-score-info">
         <span className={`rp-risk-badge rp-risk-${riskKey}`} role="status">{riskLabel}</span>
@@ -620,6 +681,7 @@ const css = `
   .rp-score-card {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 28px;
     flex-wrap: wrap;
     background: var(--color-surface);
@@ -628,10 +690,8 @@ const css = `
     padding: 24px 28px;
     margin-bottom: 20px;
   }
-  .rp-score-number { display: flex; align-items: baseline; gap: 2px; flex-shrink: 0; }
-  .rp-score-value  { font-size: 52px; font-weight: 700; line-height: 1; color: var(--color-text); }
-  .rp-score-denom  { font-size: 20px; font-weight: 400; color: var(--color-text-muted); }
-  .rp-score-info   { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 8px; }
+  .rp-gauge-wrap { flex-shrink: 0; width: 200px; }
+  .rp-score-info { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 8px; }
   .rp-risk-badge {
     display: inline-block;
     width: fit-content;
@@ -890,7 +950,6 @@ const css = `
   @media (max-width: 479px) {
     .rp-content      { padding: 20px 16px 40px; }
     .rp-score-card   { padding: 20px; gap: 16px; }
-    .rp-score-value  { font-size: 40px; }
     .rp-cta          { padding: 20px; }
     .rp-state-box    { padding: 28px 20px; }
     .rp-header       { flex-direction: column; }
