@@ -173,3 +173,58 @@
   border-left: 3px solid var(--color-danger);
   margin: 0;
 }
+
+/* ── Score badge (new check-based format) ── */
+.sc-score-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 99px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.sc-score-pass { color: var(--color-success); background: rgba(22,163,74,0.1); }
+.sc-score-warn { color: #ca8a04;              background: rgba(202,138,4,0.1); }
+.sc-score-fail { color: var(--color-danger);  background: rgba(220,38,38,0.1); }
+
+/* ── Individual checks list ── */
+.sc-checks-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sc-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+}
+.sc-check-pass { background: #f0fdf4; border-color: rgba(22,163,74,0.2); }
+.sc-check-warn { background: #fffbeb; border-color: rgba(202,138,4,0.2);  }
+.sc-check-fail { background: #fff1f2; border-color: rgba(220,38,38,0.2); }
+
+.sc-check-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-top: 1px;
+}
+.sc-badge-pass { color: var(--color-success); background: rgba(22,163,74,0.15); }
+.sc-badge-warn { color: #ca8a04;              background: rgba(202,138,4,0.15); }
+.sc-badge-fail { color: var(--color-danger);  background: rgba(220,38,38,0.15); }
+
+.sc-check-body    { flex: 1; min-width: 0; }
+.sc-check-name    { font-size: 0.875rem; font-weight: 600; color: var(--color-text); line-height: 1.4; margin: 0; }
+.sc-check-details { font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.4; margin: 3px 0 0; }
+.sc-check-fix     { font-size: 0.75rem; color: #ca8a04; font-weight: 500; margin: 3px 0 0; }

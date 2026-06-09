@@ -5,41 +5,20 @@ import ScannerCard from '../components/ScannerCard';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const SCORER_KEYS = ['ssl', 'headers', 'dns', 'subdomains', 'tech', 'gdpr'];
-
-const MODULE_META = {
-  ssl:        { label: 'SSL/TLS Certificates', icon: '🔒' },
-  headers:    { label: 'Security Headers',     icon: '🛡️' },
-  dns:        { label: 'DNS Records',          icon: '🌐' },
-  ports:      { label: 'Open Ports',           icon: '🔌' },
-  subdomains: { label: 'Subdomains',           icon: '🗺️' },
-  tech:       { label: 'Tech Detection',       icon: '🔧' },
-  gdpr:       { label: 'GDPR Compliance',      icon: '⚖️' },
-};
-
 const CONCERNS    = ['SSL/TLS Security', 'GDPR Compliance', 'SRA Compliance', 'Phishing Risk'];
 const IT_MGMT_OPT = ['In-house', 'Outsourced', 'Hybrid', 'No formal process'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function computeScore(results) {
-  if (!results) return 0;
-  const pts   = { pass: 100, warn: 50, fail: 0, error: 0 };
-  const total = SCORER_KEYS.reduce((sum, k) => sum + (pts[results[k]?.status] ?? 0), 0);
-  return Math.round((total / (SCORER_KEYS.length * 100)) * 100);
-}
-
 function getRiskKey(score) {
   if (score >= 80) return 'low';
-  if (score >= 60) return 'medium';
-  if (score >= 40) return 'high';
+  if (score >= 50) return 'medium';
   return 'critical';
 }
 
 function getRiskLabel(score) {
   if (score >= 80) return 'Low Risk';
-  if (score >= 60) return 'Medium Risk';
-  if (score >= 40) return 'High Risk';
+  if (score >= 50) return 'Medium Risk';
   return 'Critical Risk';
 }
 
@@ -98,8 +77,25 @@ function Loading({ domain }) {
   );
 }
 
-function ErrorView({ domain, message, onRetry }) {
-  const navigate = useNavigate();
+function ErrorView({ domain, message, onRetry, autoRetry }) {
+  const navigate    = useNavigate();
+  const onRetryRef  = useRef(onRetry);
+  onRetryRef.current = onRetry;
+
+  const [countdown, setCountdown] = useState(autoRetry ? 15 : null);
+
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown === 0) { onRetryRef.current(); return; }
+    const id = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(id);
+  }, [countdown]);
+
+  function handleRetryNow() {
+    setCountdown(null);
+    onRetryRef.current();
+  }
+
   return (
     <div className="rp">
       <style>{css}</style>
@@ -109,9 +105,16 @@ function ErrorView({ domain, message, onRetry }) {
           <div className="rp-state-icon" aria-hidden="true">⚠️</div>
           <h2>Scan failed</h2>
           <p>{message || `Could not scan ${domain}. Please try again.`}</p>
+          {countdown !== null && (
+            <p className="rp-retry-countdown" aria-live="polite">
+              Retrying in {countdown}s…
+            </p>
+          )}
           <div className="rp-state-actions">
             <button className="btn btn-secondary" onClick={() => navigate('/')}>← Back</button>
-            <button className="btn btn-primary"   onClick={onRetry}>Try Again</button>
+            <button className="btn btn-primary" onClick={handleRetryNow}>
+              {countdown !== null ? 'Try Now' : 'Try Again'}
+            </button>
           </div>
         </div>
       </div>
@@ -122,14 +125,14 @@ function ErrorView({ domain, message, onRetry }) {
 
 // ─── Score card ───────────────────────────────────────────────────────────────
 
-function ScoreCard({ score, results }) {
-  const riskKey    = getRiskKey(score);
-  const riskLabel  = getRiskLabel(score);
-  const scored     = SCORER_KEYS.filter(k => results[k]);
-  const issueCount = scored.filter(k => ['warn', 'fail'].includes(results[k].status)).length;
-  const summary    = issueCount === 0
+function ScoreCard({ score, scanners }) {
+  const riskKey     = getRiskKey(score);
+  const riskLabel   = getRiskLabel(score);
+  const totalChecks = scanners.reduce((sum, s) => sum + s.checks.length, 0);
+  const issueCount  = scanners.reduce((sum, s) => sum + s.checks.filter(c => c.status !== 'PASS').length, 0);
+  const summary     = issueCount === 0
     ? 'All checks passed'
-    : `Found issues in ${issueCount} of ${scored.length} checks`;
+    : `${issueCount} of ${totalChecks} checks need attention`;
 
   return (
     <div className="rp-score-card" role="region" aria-label="Overall security score">
@@ -362,10 +365,8 @@ function Toast({ message, onDismiss }) {
 // ─── Full results view ────────────────────────────────────────────────────────
 
 function ResultsView({ data, onBack }) {
-  const score    = computeScore(data.results);
+  const score    = data.score;
   const scanDate = formatDate(data.scannedAt);
-  const extras   = Object.keys(data.results || {}).filter(k => !SCORER_KEYS.includes(k));
-  const gridKeys = [...SCORER_KEYS, ...extras];
 
   const [gateOpen,   setGateOpen]   = useState(false);
   const [gatePassed, setGatePassed] = useState(false);
@@ -400,28 +401,19 @@ function ResultsView({ data, onBack }) {
         </div>
 
         {/* ── Score card — always visible ── */}
-        <ScoreCard score={score} results={data.results || {}} />
+        <ScoreCard score={score} scanners={data.scanners || []} />
 
         {/* ── Scanner grid — blurred until gate passes ── */}
         <div className={`rp-grid-wrap${gatePassed ? '' : ' rp-grid-locked'}`}>
           <div className="rp-grid" role="list" aria-label="Scanner results">
-            {gridKeys.map(key => {
-              const result = data.results?.[key];
-              if (!result) return null;
-              const meta = MODULE_META[key] ?? { label: key, icon: '🔍' };
-              return (
-                <ScannerCard
-                  key={key}
-                  module={key}
-                  icon={meta.icon}
-                  label={meta.label}
-                  status={result.status}
-                  details={result.details}
-                  issues={result.issues ?? []}
-                  error={result.error}
-                />
-              );
-            })}
+            {(data.scanners || []).map(scanner => (
+              <ScannerCard
+                key={scanner.name}
+                name={scanner.name}
+                score={scanner.score}
+                checks={scanner.checks}
+              />
+            ))}
           </div>
 
           {!gatePassed && (
@@ -483,7 +475,7 @@ function ResultsView({ data, onBack }) {
         <GateModal
           domain={data.domain}
           scanScore={score}
-          scanResults={data.results}
+          scanResults={data.scanners}
           onSuccess={handleGateSuccess}
           onClose={() => setGateOpen(false)}
         />
@@ -523,6 +515,7 @@ export default function Results() {
       domain={domain}
       message={errMsg}
       onRetry={() => setRetryCount(n => n + 1)}
+      autoRetry={errMsg.includes('Cannot connect')}
     />
   );
   return <ResultsView data={data} onBack={() => navigate('/')} />;
@@ -592,6 +585,10 @@ const css = `
   .rp-state-box p {
     font-size: 15px; color: var(--color-text-muted);
     line-height: 1.55; margin-bottom: 24px;
+  }
+  .rp-retry-countdown {
+    font-size: 14px; color: var(--color-text-muted);
+    margin-bottom: 0 !important;
   }
   .rp-state-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
