@@ -6,6 +6,10 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+console.log('[API-DEBUG] Axios baseURL:', api.defaults.baseURL);
+console.log('[API-DEBUG] VITE_API_URL value:', import.meta.env.VITE_API_URL);
+console.log('[API-DEBUG] Full endpoint:', api.defaults.baseURL + '/api/scan/submit-gate');
+
 export async function scanDomain(domain) {
   try {
     const { data } = await api.post('/api/scan', { domain });
@@ -17,6 +21,7 @@ export async function scanDomain(domain) {
 
 export async function submitGate(payload) {
   try {
+    console.log('[API-DEBUG] Making request to:', `${api.defaults.baseURL}/api/scan/submit-gate`);
     const { data } = await api.post('/api/scan/submit-gate', payload);
     return data;
   } catch (err) {
