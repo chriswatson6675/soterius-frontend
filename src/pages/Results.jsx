@@ -123,11 +123,10 @@ function ErrorView({ domain, message, onRetry, autoRetry }) {
   );
 }
 
-// ─── Score gauge (SVG semicircle) ────────────────────────────────────────────
+// ─── Score gauge (SVG semicircle, gradient) ───────────────────────────────────
 
 function ScoreGauge({ score }) {
   const cx = 100, cy = 105, r = 78, sw = 16;
-  const color = score >= 80 ? '#16a34a' : score >= 50 ? '#ca8a04' : '#dc2626';
 
   function toXY(deg) {
     const rad = (deg * Math.PI) / 180;
@@ -137,15 +136,27 @@ function ScoreGauge({ score }) {
   const [sx, sy] = toXY(180); // left endpoint  (22, 105)
   const [ex, ey] = toXY(0);   // right endpoint (178, 105)
 
-  // Full background arc: 180° clockwise from left → top → right
-  const bgPath = `M ${sx} ${sy} A ${r} ${r} 0 0 1 ${ex} ${ey}`;
-
-  // Score fill arc — span is always ≤ 180° so large-arc-flag=0
+  const bgPath     = `M ${sx} ${sy} A ${r} ${r} 0 0 1 ${ex} ${ey}`;
   const scoreAngle = 180 + (score / 100) * 180;
   const [nx, ny]   = toXY(scoreAngle);
   const scorePath  = score > 0
     ? `M ${sx} ${sy} A ${r} ${r} 0 0 1 ${nx} ${ny}`
     : null;
+
+  // Interpolate a color from the gradient stops at an arbitrary fraction 0–1.
+  // The gradient maps linearly in x-space: 0%=red, 50%=amber, 100%=green.
+  // The dot's x-position relative to [sx, ex] gives its gradient fraction.
+  function lerpHex(a, b, t) {
+    const p = s => [parseInt(s.slice(1,3),16), parseInt(s.slice(3,5),16), parseInt(s.slice(5,7),16)];
+    const [ar,ag,ab] = p(a), [br,bg,bb] = p(b);
+    return `rgb(${Math.round(ar+(br-ar)*t)},${Math.round(ag+(bg-ag)*t)},${Math.round(ab+(bb-ab)*t)})`;
+  }
+
+  const gradFrac = (nx - sx) / (ex - sx); // 0→1, tracks the gradient x-stops
+  const dotColor = gradFrac <= 0.5
+    ? lerpHex('#dc2626', '#f59e0b', gradFrac / 0.5)
+    : lerpHex('#f59e0b', '#10b981', (gradFrac - 0.5) / 0.5);
+  const textColor = score >= 80 ? '#10b981' : score >= 50 ? '#f59e0b' : '#dc2626';
 
   return (
     <svg
@@ -154,22 +165,34 @@ function ScoreGauge({ score }) {
       aria-label={`Security score: ${score}%`}
       style={{ width: '100%', maxWidth: 200, display: 'block', margin: '0 auto' }}
     >
-      {/* Background arc */}
-      <path d={bgPath} fill="none" stroke="#e5e7eb" strokeWidth={sw} strokeLinecap="butt" />
+      <defs>
+        {/* Horizontal gradient mapped to arc endpoints in user-space coords */}
+        <linearGradient id="gauge-grad" gradientUnits="userSpaceOnUse"
+          x1={sx} y1={sy} x2={ex} y2={sy}>
+          <stop offset="0%"   stopColor="#dc2626" />
+          <stop offset="50%"  stopColor="#f59e0b" />
+          <stop offset="100%" stopColor="#10b981" />
+        </linearGradient>
+      </defs>
 
-      {/* Colored fill arc */}
+      {/* Full arc — gradient at low opacity = the "unfilled" track */}
+      <path d={bgPath} fill="none" stroke="url(#gauge-grad)" strokeWidth={sw}
+        strokeLinecap="butt" opacity="0.22" />
+
+      {/* Score arc — same gradient at full opacity, overlaid on top */}
       {scorePath && (
-        <path d={scorePath} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="butt" />
+        <path d={scorePath} fill="none" stroke="url(#gauge-grad)" strokeWidth={sw}
+          strokeLinecap="butt" />
       )}
 
-      {/* Endpoint cap dot (not shown at 0% or 100%) */}
+      {/* Endpoint cap dot */}
       {score > 0 && score < 100 && (
-        <circle cx={nx} cy={ny} r={sw / 2} fill={color} />
+        <circle cx={nx} cy={ny} r={sw / 2} fill={dotColor} />
       )}
 
       {/* Score percentage */}
       <text x={cx} y={86} textAnchor="middle" dominantBaseline="middle"
-        fontSize="34" fontWeight="700" fill={color} fontFamily="inherit">
+        fontSize="34" fontWeight="700" fill={textColor} fontFamily="inherit">
         {score}%
       </text>
 
@@ -180,7 +203,7 @@ function ScoreGauge({ score }) {
 
       {/* Zone end-labels */}
       <text x={20} y={124} fontSize="9" fontWeight="600" fill="#dc2626" fontFamily="inherit">HIGH RISK</text>
-      <text x={180} y={124} fontSize="9" fontWeight="600" fill="#16a34a" fontFamily="inherit" textAnchor="end">LOW RISK</text>
+      <text x={180} y={124} fontSize="9" fontWeight="600" fill="#10b981" fontFamily="inherit" textAnchor="end">LOW RISK</text>
     </svg>
   );
 }
